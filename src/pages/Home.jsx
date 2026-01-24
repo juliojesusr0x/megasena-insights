@@ -1,24 +1,45 @@
-import React, { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { 
-  BarChart3, Sparkles, Database, ArrowRight, TrendingUp, 
+  BarChart3, Sparkles, Database, TrendingUp, RefreshCw,
   Dice6, Calculator, AlertTriangle, ChevronRight 
 } from 'lucide-react';
+import { toast } from 'sonner';
 import Disclaimer from '@/components/ui/Disclaimer';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 export default function Home() {
-  const { data: draws = [], isLoading } = useQuery({
+  const queryClient = useQueryClient();
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const { data: draws = [], isLoading, refetch } = useQuery({
     queryKey: ['draws-count'],
-    queryFn: () => base44.entities.Draw.list('-draw_number', 1),
+    queryFn: () => base44.entities.Draw.list('-draw_number', 10),
   });
 
+  const handleUpdateDraws = async () => {
+    setIsUpdating(true);
+    try {
+      await refetch();
+      queryClient.invalidateQueries({ queryKey: ['draws-count'] });
+      queryClient.invalidateQueries({ queryKey: ['draws-all'] });
+      queryClient.invalidateQueries({ queryKey: ['draws-list'] });
+      queryClient.invalidateQueries({ queryKey: ['draws-count-all'] });
+      toast.success('Dados atualizados com sucesso!');
+    } catch (error) {
+      toast.error('Erro ao atualizar dados');
+    }
+    setIsUpdating(false);
+  };
+
   const hasData = draws.length > 0;
+  const latestDraw = hasData ? draws[0] : null;
 
   const features = [
     {
@@ -52,6 +73,7 @@ export default function Home() {
   ];
 
   return (
+    <ProtectedRoute>
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50">
       {/* Hero Section */}
       <div className="relative overflow-hidden">
@@ -60,9 +82,23 @@ export default function Home() {
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-teal-200 rounded-full blur-3xl opacity-30" />
         
         <div className="relative max-w-6xl mx-auto px-4 pt-16 pb-20">
-          <Badge className="mb-6 bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
-            Análise Estatística • Não é previsão
-          </Badge>
+          <div className="flex flex-wrap gap-3 mb-6">
+            <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
+              Análise Estatística • Não é previsão
+            </Badge>
+            {hasData && (
+              <>
+                <Badge variant="outline" className="bg-white">
+                  {draws.length} sorteios importados
+                </Badge>
+                {latestDraw && (
+                  <Badge variant="outline" className="bg-white">
+                    Último: {new Date(latestDraw.draw_date).toLocaleDateString('pt-BR')}
+                  </Badge>
+                )}
+              </>
+            )}
+          </div>
           
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-slate-900 mb-6 leading-tight">
             Análise Estatística da
@@ -77,7 +113,7 @@ export default function Home() {
             <strong className="text-slate-800"> Para fins educacionais e de entretenimento.</strong>
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex flex-wrap gap-4">
             {hasData ? (
               <>
                 <Link to={createPageUrl('Analysis')}>
@@ -93,6 +129,25 @@ export default function Home() {
                     Gerar Combinações
                   </Button>
                 </Link>
+                <Button 
+                  size="lg" 
+                  variant="outline"
+                  onClick={handleUpdateDraws}
+                  disabled={isUpdating}
+                  className="text-lg px-8 h-14 border-2 border-emerald-500 text-emerald-600 hover:bg-emerald-50"
+                >
+                  {isUpdating ? (
+                    <>
+                      <RefreshCw className="h-5 w-5 mr-2 animate-spin" />
+                      Atualizando...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="h-5 w-5 mr-2" />
+                      Atualizar Dados
+                    </>
+                  )}
+                </Button>
               </>
             ) : (
               <Link to={createPageUrl('Data')}>
