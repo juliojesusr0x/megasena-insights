@@ -1,15 +1,15 @@
-import Home from './pages/Home';
 import Analysis from './pages/Analysis';
-import Generator from './pages/Generator';
 import Data from './pages/Data';
+import Generator from './pages/Generator';
+import Home from './pages/Home';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
-    "Home": Home,
     "Analysis": Analysis,
-    "Generator": Generator,
     "Data": Data,
+    "Generator": Generator,
+    "Home": Home,
 }
 
 export const pagesConfig = {

@@ -14,7 +14,7 @@ import {
   CheckCircle, ExternalLink 
 } from 'lucide-react';
 
-import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import AdminRoute from '@/components/auth/AdminRoute';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -66,7 +66,7 @@ export default function Data() {
   };
 
   return (
-    <ProtectedRoute>
+    <AdminRoute>
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-white">
       <div className="max-w-4xl mx-auto p-4 md:p-8 space-y-6">
         {/* Header */}
@@ -252,7 +252,7 @@ export default function Data() {
           </Card>
         )}
       </div>
-    </div>
-    </ProtectedRoute>
-  );
-}
+      </div>
+      </AdminRoute>
+      );
+      }

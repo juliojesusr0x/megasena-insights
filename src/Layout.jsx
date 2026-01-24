@@ -21,7 +21,7 @@ const navigation = [
   { name: 'Início', href: 'Home', icon: Home },
   { name: 'Análises', href: 'Analysis', icon: BarChart3 },
   { name: 'Gerador', href: 'Generator', icon: Sparkles },
-  { name: 'Dados', href: 'Data', icon: Database },
+  { name: 'Dados', href: 'Data', icon: Database, adminOnly: true },
 ];
 
 export default function Layout({ children, currentPageName }) {
@@ -70,7 +70,7 @@ export default function Layout({ children, currentPageName }) {
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-1">
-              {navigation.map((item) => (
+              {navigation.filter(item => !item.adminOnly || user?.role === 'admin').map((item) => (
                 <Link key={item.name} to={createPageUrl(item.href)}>
                   <Button
                     variant={isActive(item.href) ? "default" : "ghost"}
@@ -129,7 +129,7 @@ export default function Layout({ children, currentPageName }) {
           {mobileMenuOpen && (
             <div className="md:hidden py-4 border-t border-slate-200">
               <div className="flex flex-col gap-2">
-                {navigation.map((item) => (
+                {navigation.filter(item => !item.adminOnly || user?.role === 'admin').map((item) => (
                   <Link 
                     key={item.name} 
                     to={createPageUrl(item.href)}
