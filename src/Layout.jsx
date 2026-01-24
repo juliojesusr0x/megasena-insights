@@ -1,11 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { base44 } from '@/api/base44Client';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { 
   Home, BarChart3, Sparkles, Database, Menu, X, 
-  TrendingUp, AlertTriangle 
+  TrendingUp, AlertTriangle, User, LogOut, Settings
 } from 'lucide-react';
 
 const navigation = [
@@ -17,7 +26,24 @@ const navigation = [
 
 export default function Layout({ children, currentPageName }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [user, setUser] = useState(null);
   const location = useLocation();
+
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const userData = await base44.auth.me();
+        setUser(userData);
+      } catch (error) {
+        console.error('Failed to load user:', error);
+      }
+    };
+    loadUser();
+  }, []);
+
+  const handleLogout = () => {
+    base44.auth.logout();
+  };
 
   const isActive = (pageName) => {
     const pageUrl = createPageUrl(pageName);
@@ -60,6 +86,28 @@ export default function Layout({ children, currentPageName }) {
                   </Button>
                 </Link>
               ))}
+              
+              {/* User Menu */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="ml-2">
+                    <User className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium">{user?.full_name || 'Usuário'}</p>
+                      <p className="text-xs text-slate-500">{user?.email}</p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout} className="text-red-600 cursor-pointer">
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Sair
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
 
             {/* Mobile Menu Button */}
@@ -101,6 +149,23 @@ export default function Layout({ children, currentPageName }) {
                     </Button>
                   </Link>
                 ))}
+                
+                <div className="border-t border-slate-200 my-2 pt-2">
+                  <div className="px-3 py-2 text-xs text-slate-500">
+                    {user?.full_name || 'Usuário'}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start gap-3 text-red-600"
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      handleLogout();
+                    }}
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Sair
+                  </Button>
+                </div>
               </div>
             </div>
           )}

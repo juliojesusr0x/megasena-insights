@@ -13,6 +13,7 @@ import {
   AlertCircle, Database, Layers 
 } from 'lucide-react';
 
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import FrequencyHeatmap from '@/components/charts/FrequencyHeatmap';
 import DistributionChart from '@/components/charts/DistributionChart';
 import SumHistogram from '@/components/charts/SumHistogram';
@@ -89,6 +90,7 @@ export default function Analysis() {
   const decades = analyzeDecadeDistribution(draws);
 
   return (
+    <ProtectedRoute>
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-white">
       <div className="max-w-6xl mx-auto p-4 md:p-8 space-y-6">
         {/* Header */}
