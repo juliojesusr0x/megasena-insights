@@ -9,9 +9,10 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from 'sonner';
 import { 
   Database, Trash2, RefreshCw, Calendar, Hash, AlertCircle, 
-  CheckCircle, ExternalLink 
+  CheckCircle, ExternalLink, ShieldCheck
 } from 'lucide-react';
 
 import AdminRoute from '@/components/auth/AdminRoute';
@@ -32,6 +33,8 @@ import DataImport from '@/components/data/DataImport';
 export default function Data() {
   const queryClient = useQueryClient();
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [verifyResult, setVerifyResult] = useState(null);
 
   const { data: draws = [], isLoading, refetch } = useQuery({
     queryKey: ['draws-list'],
@@ -51,10 +54,28 @@ export default function Data() {
     refetch();
   };
 
+  const handleVerifyAll = async () => {
+    setIsVerifying(true);
+    setVerifyResult(null);
+    try {
+      const response = await base44.functions.invoke('verifyAllDraws', {});
+      const result = response.data;
+      setVerifyResult(result);
+      if (result.mismatches === 0) {
+        toast.success(result.message);
+      } else {
+        toast.warning(`${result.mismatches} divergência(s) corrigida(s)!`);
+        handleImportComplete();
+      }
+    } catch (error) {
+      toast.error('Erro ao verificar sorteios');
+    }
+    setIsVerifying(false);
+  };
+
   const handleDeleteAll = async () => {
     setIsDeleting(true);
     try {
-      // Delete in batches
       for (const draw of allDraws) {
         await base44.entities.Draw.delete(draw.id);
       }
@@ -155,6 +176,60 @@ export default function Data() {
 
         {/* Import Component */}
         <DataImport onImportComplete={handleImportComplete} />
+
+        {/* Verify All */}
+        {allDraws.length > 0 && (
+          <Card className="border-slate-200">
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <ShieldCheck className="h-5 w-5 text-blue-500" />
+                Verificar Integridade dos Dados
+              </CardTitle>
+              <CardDescription>
+                Confere todos os sorteios do banco com os dados oficiais da Caixa e corrige automaticamente divergências.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Button
+                onClick={handleVerifyAll}
+                disabled={isVerifying}
+                variant="outline"
+                className="border-blue-200 text-blue-700 hover:bg-blue-50"
+              >
+                {isVerifying ? (
+                  <><RefreshCw className="h-4 w-4 mr-2 animate-spin" />Verificando {allDraws.length} sorteios...</>
+                ) : (
+                  <><ShieldCheck className="h-4 w-4 mr-2" />Verificar Todos os Sorteios</>
+                )}
+              </Button>
+
+              {verifyResult && (
+                <Alert className={verifyResult.mismatches === 0 ? 'bg-emerald-50 border-emerald-200' : 'bg-amber-50 border-amber-200'}>
+                  {verifyResult.mismatches === 0 ? (
+                    <CheckCircle className="h-4 w-4 text-emerald-600" />
+                  ) : (
+                    <AlertCircle className="h-4 w-4 text-amber-600" />
+                  )}
+                  <AlertDescription className={verifyResult.mismatches === 0 ? 'text-emerald-700' : 'text-amber-700'}>
+                    <p className="font-semibold">{verifyResult.message}</p>
+                    <p className="text-sm mt-1">
+                      Verificados: {verifyResult.checked} | Divergências corrigidas: {verifyResult.mismatches} | Inacessíveis: {verifyResult.unreachable}
+                    </p>
+                    {verifyResult.mismatchDetails?.length > 0 && (
+                      <ul className="text-sm mt-2 space-y-1">
+                        {verifyResult.mismatchDetails.map(m => (
+                          <li key={m.draw_number}>
+                            <strong>Concurso {m.draw_number}:</strong> DB [{m.db.join(', ')}] → Caixa [{m.official.join(', ')}]
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </AlertDescription>
+                </Alert>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Delete All */}
         {allDraws.length > 0 && (
