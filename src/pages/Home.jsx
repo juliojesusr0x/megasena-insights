@@ -26,14 +26,20 @@ export default function Home() {
   const handleUpdateDraws = async () => {
     setIsUpdating(true);
     try {
+      const response = await base44.functions.invoke('syncLatestDraws', {});
+      const result = response.data;
+      if (result.imported > 0) {
+        toast.success(result.message);
+      } else {
+        toast.info('Dados já estão atualizados!');
+      }
       await refetch();
       queryClient.invalidateQueries({ queryKey: ['draws-count'] });
       queryClient.invalidateQueries({ queryKey: ['draws-all'] });
       queryClient.invalidateQueries({ queryKey: ['draws-list'] });
       queryClient.invalidateQueries({ queryKey: ['draws-count-all'] });
-      toast.success('Dados atualizados com sucesso!');
     } catch (error) {
-      toast.error('Erro ao atualizar dados');
+      toast.error('Erro ao sincronizar dados');
     }
     setIsUpdating(false);
   };
