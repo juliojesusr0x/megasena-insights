@@ -14,13 +14,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { 
   Home, BarChart3, Sparkles, Database, Menu, X, 
-  TrendingUp, AlertTriangle, User, LogOut, Settings
+  TrendingUp, AlertTriangle, User, LogOut, Bot
 } from 'lucide-react';
 
 const navigation = [
   { name: 'Início', href: 'Home', icon: Home },
   { name: 'Análises', href: 'Analysis', icon: BarChart3 },
   { name: 'Gerador', href: 'Generator', icon: Sparkles },
+  { name: 'AI Chat', href: 'AIChat', icon: Bot },
   { name: 'Dados', href: 'Data', icon: Database, adminOnly: true },
 ];
 
